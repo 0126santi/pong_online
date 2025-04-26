@@ -8,8 +8,6 @@ const io = socketIo(server);
 
 app.use(express.static('public'));
 
-app.use(express.static(__dirname));
-
 const rooms = {};
 
 io.on('connection', (socket) => {
@@ -32,15 +30,15 @@ io.on('connection', (socket) => {
     rooms[roomName].players.push(socket.id);
     socket.join(roomName);
     socket.emit('roomCreated', { roomName, player: 2 });
-    io.to(roomName).emit('roomReady', { players: 2 });
+    io.to(roomName).emit('roomReady');
   });
 
   socket.on('playerReady', (roomName) => {
     const room = rooms[roomName];
     if (!room) return;
     room.ready++;
-    if (room.ready === 2 && room.gameStarted === false) {
-      io.to(room.host).emit('canStartGame'); // Solo host ve el botón para iniciar
+    if (room.ready === 2 && !room.gameStarted) {
+      io.to(room.host).emit('canStartGame');
     }
   });
 
@@ -69,7 +67,7 @@ io.on('connection', (socket) => {
 
   socket.on('restartGame', (roomName) => {
     const room = rooms[roomName];
-    if (!room || room.host !== socket.id) return;
+    if (!room || socket.id !== room.host) return;
     room.gameStarted = false;
     room.ball = { x: 400, y: 250, vx: 5, vy: 3 };
     room.score = { p1: 0, p2: 0 };
@@ -95,12 +93,7 @@ io.on('connection', (socket) => {
     room.gameStarted = false;
     io.to(roomName).emit('showGameOver', winner);
   });
-  
 });
-
-//server.listen(3000, () => {
-  //console.log('Servidor corriendo en http://localhost:3000');
-//});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
