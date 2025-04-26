@@ -1,0 +1,106 @@
+body {
+    background: rgb(17, 17, 17);
+    color: white;
+    text-align: center;
+    font-family: sans-serif;
+    margin-top: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+canvas {
+    background: black;
+    display: block;
+    margin: 20px auto;
+    border: 2px solid white;
+  }
+#menu {
+    display: block;
+  }
+
+#gameCanvas {
+    display: none;
+  }
+#gameOver {
+    display: none;
+  }
+#startBtn {
+    display: none;
+  }
+button {
+    margin: 10px;
+    padding: 10px 16px;
+    background-color:rgb(29, 28, 28);
+    color: white;
+    border: none;
+    border-radius: 6px; 
+    font-size: 14px; 
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #3a3a3a;
+  }
+
+input {
+    margin: 10px;
+    background-color: #3a3a3a; 
+    color: #d1d1d1; 
+    padding: 10px 20px; 
+    border: none;
+    border-radius: 6px; 
+    font-size: 14px;
+    width: 300px;
+    outline: none; 
+  }
+
+  .controles {
+    font-family: Arial, sans-serif;
+    color: #888;
+    text-align: center;
+    margin-top: 80px;
+  }
+  
+  .controles h2 {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+  
+  .controles hr {
+    width: 200px;
+    margin: 10px auto;
+    border: 0;
+    border-top: 1px solid #eee;
+  }
+  
+  .jugadores {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 20px;
+  }
+  
+  .jugador {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .jugador-nombre {
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  .teclas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .tecla {
+    margin: 10px;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 18px;
+  }
+  
