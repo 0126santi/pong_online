@@ -57,12 +57,18 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('ballUpdate', ({ roomName, ball, score }) => {
+  socket.on('ballUpdate', ({ roomName, ball }) => {
     const room = rooms[roomName];
     if (!room || socket.id !== room.host) return;
     room.ball = ball;
+    io.to(roomName).emit('ballUpdate', { ball });
+  });
+
+  socket.on('scoreUpdate', ({ roomName, score }) => {
+    const room = rooms[roomName];
+    if (!room || socket.id !== room.host) return;
     room.score = score;
-    io.to(roomName).emit('ballUpdate', { ball, score });
+    io.to(roomName).emit('scoreUpdate', score);
   });
 
   socket.on('restartGame', (roomName) => {

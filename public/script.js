@@ -131,8 +131,11 @@ socket.on('opponentMove', (y) => {
   else leftPaddle.y = y;
 });
 
-socket.on('ballUpdate', ({ ball: b, score: s }) => {
+socket.on('ballUpdate', ({ ball: b }) => {
   ballTarget = b;
+});
+
+socket.on('scoreUpdate', (s) => {
   score = s;
 });
 
