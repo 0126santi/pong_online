@@ -6,169 +6,180 @@ let room = '', player = 0, isHost = false;
 let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
 let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
+let gamePaused = false; // 🆕 NUEVA VARIABLE
 
 function createRoom() {
-  room = document.getElementById('roomName').value;
-  if (room) socket.emit('createRoom', room);
+    room = document.getElementById('roomName').value;
+    if (room) socket.emit('createRoom', room);
 }
 
 function joinRoom() {
-  room = document.getElementById('roomName').value;
-  if (room) socket.emit('joinRoom', room);
+    room = document.getElementById('roomName').value;
+    if (room) socket.emit('joinRoom', room);
 }
 
 function hostStartGame() {
-  socket.emit('startGame', room);
+    socket.emit('startGame', room);
 }
 
 function restartGame() {
-  if (isHost) socket.emit('restartGame', room);
-  document.getElementById('gameOver').style.display = 'none';
-  document.getElementById('gameCanvas').style.display = 'block';
+    if (isHost) socket.emit('restartGame', room);
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('gameCanvas').style.display = 'block';
 }
 
 function resetGameState() {
-  leftPaddle.y = 200;
-  rightPaddle.y = 200;
-  ball = { x: 400, y: 250, vx: 5, vy: 3 };
-  score = { p1: 0, p2: 0 };
+    leftPaddle.y = 200;
+    rightPaddle.y = 200;
+    ball = { x: 400, y: 250, vx: 5, vy: 3 };
+    score = { p1: 0, p2: 0 };
+    gamePaused = false;
 }
 
 function checkGameOver() {
-  if (score.p1 >= 5 || score.p2 >= 5) {
-    gameRunning = false;
-    const winner = score.p1 >= 5 ? 'Jugador 1' : 'Jugador 2';
-    socket.emit('gameOver', { roomName: room, winner });
-  }
+    if (score.p1 >= 5 || score.p2 >= 5) {
+        gameRunning = false;
+        const winner = score.p1 >= 5 ? 'Jugador 1' : 'Jugador 2';
+        socket.emit('gameOver', { roomName: room, winner });
+    }
 }
 
 function update() {
-  if (!gameRunning) return;
+    if (!gameRunning || gamePaused) return; // 🛑 PAUSAR SI GAME PAUSED
 
-  if ((player === 1 && keys['w']) && leftPaddle.y > 0) leftPaddle.y -= 5;
-  if ((player === 1 && keys['s']) && leftPaddle.y < 400) leftPaddle.y += 5;
-  if ((player === 2 && keys['ArrowUp']) && rightPaddle.y > 0) rightPaddle.y -= 5;
-  if ((player === 2 && keys['ArrowDown']) && rightPaddle.y < 400) rightPaddle.y += 5;
+    // Movimiento de paletas
+    if ((player === 1 && keys['w']) && leftPaddle.y > 0) leftPaddle.y -= 5;
+    if ((player === 1 && keys['s']) && leftPaddle.y < 400) leftPaddle.y += 5;
+    if ((player === 2 && keys['ArrowUp']) && rightPaddle.y > 0) rightPaddle.y -= 5;
+    if ((player === 2 && keys['ArrowDown']) && rightPaddle.y < 400) rightPaddle.y += 5;
 
-  socket.emit('paddleMove', { roomName: room, y: player === 1 ? leftPaddle.y : rightPaddle.y });
+    socket.emit('paddleMove', { roomName: room, y: player === 1 ? leftPaddle.y : rightPaddle.y });
 
-  if (isHost) {
-    ball.x += ball.vx;
-    ball.y += ball.vy;
+    if (isHost) {
+        // Movimiento de la pelota
+        ball.x += ball.vx;
+        ball.y += ball.vy;
 
-    if (ball.y <= 0 || ball.y >= 490) ball.vy *= -1;
+        if (ball.y <= 0 || ball.y >= 490) ball.vy *= -1;
 
-    if (ball.x <= 20 && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + 100) ball.vx *= -1.05;
-    if (ball.x >= 770 && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + 100) ball.vx *= -1.05;
+        if (ball.x <= 20 && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + 100) ball.vx *= -1.05;
+        if (ball.x >= 770 && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + 100) ball.vx *= -1.05;
 
-    // ⚽ GOL: manejar con goalScored especial
-    if (ball.x <= 0) {
-      score.p2++;
-      const newBall = { x: 400, y: 250, vx: 5, vy: 3 };
-      socket.emit('goalScored', { roomName: room, ball: newBall, score });
-      ball = newBall;
-      checkGameOver();
-      return;
+        // DETECCIÓN DE GOLES
+        if (ball.x <= 0) {
+            score.p2++;
+            const newBall = { x: 400, y: 250, vx: 5, vy: 3 };
+            gamePaused = true; // 🛑 PAUSAR
+            socket.emit('goalScored', { roomName: room, ball: newBall, score });
+            ball = { x: -1000, y: -1000, vx: 0, vy: 0 }; // Mover fuera de pantalla
+            checkGameOver();
+            return;
+        }
+        if (ball.x >= 800) {
+            score.p1++;
+            const newBall = { x: 400, y: 250, vx: -5, vy: 3 };
+            gamePaused = true; // 🛑 PAUSAR
+            socket.emit('goalScored', { roomName: room, ball: newBall, score });
+            ball = { x: -1000, y: -1000, vx: 0, vy: 0 }; // Mover fuera de pantalla
+            checkGameOver();
+            return;
+        }
+
+        if (!gamePaused) {
+            socket.emit('ballUpdate', { roomName: room, ball, score });
+        }
     }
-    if (ball.x >= 800) {
-      score.p1++;
-      const newBall = { x: 400, y: 250, vx: -5, vy: 3 };
-      socket.emit('goalScored', { roomName: room, ball: newBall, score });
-      ball = newBall;
-      checkGameOver();
-      return;
-    }
-
-    // Solo emite actualizaciones normales si no hay gol
-    socket.emit('ballUpdate', { roomName: room, ball });
-  }
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "white";
-  ctx.fillRect(leftPaddle.x, leftPaddle.y, 10, 100);
-  ctx.fillRect(rightPaddle.x, rightPaddle.y, 10, 100);
-  ctx.fillRect(ball.x, ball.y, 10, 10);
-  ctx.font = "20px sans-serif";
-  ctx.fillText(`Jugador 1: ${score.p1}`, 100, 30);
-  ctx.fillText(`Jugador 2: ${score.p2}`, 600, 30);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.fillRect(leftPaddle.x, leftPaddle.y, 10, 100);
+    ctx.fillRect(rightPaddle.x, rightPaddle.y, 10, 100);
+    ctx.fillRect(ball.x, ball.y, 10, 10);
+    ctx.font = "20px sans-serif";
+    ctx.fillText(`Jugador 1: ${score.p1}`, 100, 30);
+    ctx.fillText(`Jugador 2: ${score.p2}`, 600, 30);
 }
 
 function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
+    update();
+    draw();
+    requestAnimationFrame(loop);
 }
 
-// Socket events
+// ================== SOCKETS ====================
+
 socket.on('roomCreated', ({ roomName, player: p }) => {
-  player = p;
-  isHost = player === 1;
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('gameCanvas').style.display = 'block';
-  socket.emit('playerReady', roomName);
+    player = p;
+    isHost = player === 1;
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('gameCanvas').style.display = 'block';
+    socket.emit('playerReady', roomName);
 });
 
 socket.on('roomReady', () => {
-  socket.emit('playerReady', room);
+    socket.emit('playerReady', room);
 });
 
 socket.on('canStartGame', () => {
-  if (isHost) document.getElementById('startBtn').style.display = 'inline';
+    if (isHost) document.getElementById('startBtn').style.display = 'inline';
 });
 
 socket.on('startGame', (initialBall) => {
-  ball = initialBall;
-  gameRunning = true;
-  document.getElementById('startBtn').style.display = 'none';
+    ball = initialBall;
+    gameRunning = true;
+    gamePaused = false;
+    document.getElementById('startBtn').style.display = 'none';
 });
 
 socket.on('opponentMove', (y) => {
-  if (player === 1) rightPaddle.y = y;
-  else leftPaddle.y = y;
+    if (player === 1) rightPaddle.y = y;
+    else leftPaddle.y = y;
 });
 
-socket.on('ballUpdate', ({ ball: b }) => {
-  ball = b;
+socket.on('ballUpdate', ({ ball: b, score: s }) => {
+    ball = b;
+    score = s;
 });
 
-// 🎯 Nuevo evento para recibir goles
 socket.on('goalScored', ({ ball: b, score: s }) => {
-  ball = b;
-  score = s;
+    ball = b;
+    score = s;
+    gamePaused = false; // 🟢 Continuar juego
 });
 
 socket.on('resetGame', (initialBall) => {
-  resetGameState();
-  ball = initialBall;
-  gameRunning = true;
-  document.getElementById('gameOver').style.display = 'none';
-  document.getElementById('gameCanvas').style.display = 'block';
+    resetGameState();
+    ball = initialBall;
+    gameRunning = true;
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('gameCanvas').style.display = 'block';
 });
 
 socket.on('playerLeft', () => {
-  alert('El otro jugador salió de la sala.');
-  location.reload();
+    alert('El otro jugador salió de la sala.');
+    location.reload();
 });
 
 socket.on('showGameOver', (winner) => {
-  gameRunning = false;
-  document.getElementById('gameCanvas').style.display = 'none';
-  document.getElementById('gameOver').style.display = 'block';
-  const winnerText = winner === 1 ? "¡Jugador 1 gana!" : "¡Jugador 2 gana!";
-  document.getElementById('winnerText').innerText = winnerText;
+    gameRunning = false;
+    document.getElementById('gameCanvas').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'block';
+    const winnerText = winner === 1 ? "¡Jugador 1 gana!" : "¡Jugador 2 gana!";
+    document.getElementById('winnerText').innerText = winnerText;
 
-  if (isHost) {
-    document.getElementById('startBtn').style.display = 'none';
-    document.querySelector('#gameOver button').style.display = 'inline';
-  } else {
-    document.querySelector('#gameOver button').style.display = 'none';
-  }
+    if (isHost) {
+        document.getElementById('startBtn').style.display = 'none';
+        document.querySelector('#gameOver button').style.display = 'inline';
+    } else {
+        document.querySelector('#gameOver button').style.display = 'none';
+    }
 });
 
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
 
 loop();
+
 
