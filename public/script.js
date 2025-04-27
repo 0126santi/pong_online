@@ -155,7 +155,7 @@ socket.on('canStartGame', () => {
 socket.on('startGame', (initialBall) => {
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = false; // Detener el juego mientras se hace el contador
+  gameRunning = true;  // Iniciamos el juego después de que termine el contador
   startCountdown(); // Empezar el contador cuando el host da click para empezar
 });
 
@@ -176,7 +176,7 @@ socket.on('resetGame', (initialBall) => {
   resetGameState();
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;
+  gameRunning = true;  // Reiniciar el juego después de resetear
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
 });

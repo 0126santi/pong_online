@@ -110,10 +110,10 @@ io.on('connection', (socket) => {
   socket.on('countdownFinished', (roomName) => {
     const room = rooms[roomName];
     if (!room || room.gameStarted) return;
-
+  
     room.gameStarted = true;
-
-    // Empezar el juego mandando la pelota y el score inicial
+  
+    // Iniciar el juego enviando la pelota y el puntaje inicial
     io.to(roomName).emit('startGame', room.ball);
   });
 
