@@ -86,10 +86,12 @@ function update() {
     if (ball.x <= 0) {
       socket.emit('goalScored', { roomName: room, scorer: 'p2' });
       resetBall();
+      socket.emit('startCountdown', roomName);
     }
     if (ball.x >= 800) {
       socket.emit('goalScored', { roomName: room, scorer: 'p1' });
       resetBall();
+      socket.emit('startCountdown', roomName);
     }
 
     socket.emit('ballUpdate', { roomName: room, ball, score });
@@ -192,10 +194,14 @@ socket.on('resetGame', (initialBall) => {
   resetGameState();
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;
+  gameRunning = false; // Primero pausamos el juego hasta que termine el contador
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
+
+  // Iniciar el contador después de reiniciar todo
+  showCountdownAndStartGame();
 });
+
 
 socket.on('playerLeft', () => {
   alert('El otro jugador salió de la sala.');
@@ -215,6 +221,11 @@ socket.on('showGameOver', (winner) => {
     document.querySelector('#gameOver button').style.display = 'none';
   }
 });
+
+socket.on('startCountdown', () => {
+  showCountdownAndStartGame();
+});
+
 
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);

@@ -102,6 +102,12 @@ io.on('connection', (socket) => {
     room.gameStarted = false;
     io.to(roomName).emit('showGameOver', winner);
   });
+
+  socket.on('startCountdown', (roomName) => {
+    const room = rooms[roomName];
+    if (!room || socket.id !== room.host) return;
+    io.to(roomName).emit('startCountdown');
+  });  
 });
 
 const PORT = process.env.PORT || 3000;
