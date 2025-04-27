@@ -46,9 +46,7 @@ io.on('connection', (socket) => {
     const room = rooms[roomName];
     if (!room || socket.id !== room.host || room.gameStarted) return;
     room.gameStarted = true;
-
-    // Sincronizar cuenta regresiva con ambos jugadores
-    io.to(roomName).emit('startCountdown', { ball: room.ball });
+    io.to(roomName).emit('startGame', room.ball);
   });
 
   socket.on('paddleMove', ({ roomName, y }) => {
@@ -66,31 +64,23 @@ io.on('connection', (socket) => {
     io.to(roomName).emit('ballUpdate', { ball });
   });
 
+
   socket.on('goalScored', ({ roomName, scorer }) => {
     const room = rooms[roomName];
     if (!room) return;
 
-    room.score[scorer]++;
-    io.to(roomName).emit('scoreUpdate', room.score);
+    room.score[scorer]++; // Actualiza el score en el servidor
+    io.to(roomName).emit('scoreUpdate', room.score); // Manda a todos
+});
 
-    // Nueva cuenta regresiva después de un gol
-    io.to(roomName).emit('startCountdown', { ball: room.ball });
-  });
 
   socket.on('restartGame', (roomName) => {
     const room = rooms[roomName];
     if (!room || socket.id !== room.host) return;
-
     room.gameStarted = false;
     room.ball = { x: 400, y: 250, vx: 5, vy: 3 };
     room.score = { p1: 0, p2: 0 };
-
     io.to(roomName).emit('resetGame', room.ball);
-
-    // Después de resetear, volver a hacer cuenta regresiva
-    setTimeout(() => {
-      io.to(roomName).emit('startCountdown', { ball: room.ball });
-    }, 500); // Un pequeño delay para que ambos clientes terminen de resetear
   });
 
   socket.on('disconnect', () => {
