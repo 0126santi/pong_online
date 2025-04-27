@@ -136,6 +136,7 @@ socket.on('ballUpdate', ({ ball: b }) => {
 });
 
 socket.on('scoreUpdate', (s) => {
+  console.log("Puntaje actualizado:", s);  // Para depuración
   score = s;
 });
 
