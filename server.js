@@ -60,14 +60,27 @@ io.on('connection', (socket) => {
   socket.on('ballUpdate', ({ roomName, ball }) => {
     const room = rooms[roomName];
     if (!room || socket.id !== room.host) return;
+
+    // Actualizamos la posición de la bola
     room.ball = ball;
 
-    // Emitir el cambio de bola a ambos jugadores
-    io.to(roomName).emit('ballUpdate', { ball });
+    // Verificar si se ha marcado un gol (cuando la bola sale del campo)
+    if (ball.x <= 0) {
+        room.score.p2++;  // Gol del jugador 2
+        room.ball = { x: 400, y: 250, vx: 5, vy: 3 }; // Resetear la bola
+    }
+    if (ball.x >= 800) {
+        room.score.p1++;  // Gol del jugador 1
+        room.ball = { x: 400, y: 250, vx: -5, vy: 3 }; // Resetear la bola
+    }
 
-    // Emitir puntaje actualizado a todos los jugadores de la sala
+    // Emitir el puntaje actualizado a todos los jugadores de la sala
     io.to(roomName).emit('scoreUpdate', room.score);  // Emitir a ambos jugadores
+
+    // Emitir la actualización de la bola
+    io.to(roomName).emit('ballUpdate', { ball: room.ball });
 });
+
 
 // Cuando se marca un gol
 if (ball.x <= 0) {
