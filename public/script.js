@@ -5,8 +5,8 @@ const ctx = canvas.getContext("2d");
 let room = '', player = 0, isHost = false;
 let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
-let ballTarget = { x: 400, y: 250 };
-let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
+let ballTarget = { ...ball };
+let gameRunning = false;
 
 const interpolationFactor = 0.2;
 
@@ -51,16 +51,22 @@ function checkGameOver() {
   }
 }
 
-function startCountdown(callback) {
-  countdown = 3;
-  showCountdown = true;
+function showCountdownAndStartGame() {
+  let countdown = 3;
+  const countdownOverlay = document.getElementById('countdown');
+  countdownOverlay.style.display = 'flex';
+  countdownOverlay.innerText = countdown;
 
-  countdownInterval = setInterval(() => {
+  const interval = setInterval(() => {
     countdown--;
-    if (countdown === 0) {
-      clearInterval(countdownInterval);
-      showCountdown = false;
-      callback();
+    if (countdown > 0) {
+      countdownOverlay.innerText = countdown;
+    } else if (countdown === 0) {
+      countdownOverlay.innerText = '¡GO!';
+    } else {
+      clearInterval(interval);
+      countdownOverlay.style.display = 'none';
+      gameRunning = true;
     }
   }, 1000);
 }
@@ -194,12 +200,10 @@ socket.on('resetGame', (initialBall) => {
   resetGameState();
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = false; // Primero pausamos el juego hasta que termine el contador
+  gameRunning = false;
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
-
-  // Iniciar el contador después de reiniciar todo
-  showCountdownAndStartGame();
+  // Ahora el server enviará el startCountdown enseguida
 });
 
 
@@ -222,7 +226,10 @@ socket.on('showGameOver', (winner) => {
   }
 });
 
-socket.on('startCountdown', () => {
+socket.on('startCountdown', ({ ball: initialBall }) => {
+  ball = initialBall;
+  ballTarget = initialBall;
+  gameRunning = false;
   showCountdownAndStartGame();
 });
 
