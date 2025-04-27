@@ -125,7 +125,7 @@ function startCountdown() {
       document.getElementById('countdown').style.display = 'none'; // Ocultar el contador
 
       // Aquí, podemos llamar a la función que hace que la pelota se mueva
-      socket.emit('countdownFinished', room); // Notificamos al servidor
+      socket.emit('countdownFinished', room); // Notificamos al servidor que el contador ha terminado
     }
   }, 1000); // Hacerlo cada segundo
 }
@@ -155,8 +155,8 @@ socket.on('canStartGame', () => {
 socket.on('startGame', (initialBall) => {
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;  // Iniciamos el juego después de que termine el contador
-  startCountdown(); // Empezar el contador cuando el host da click para empezar
+  gameRunning = true;  // Iniciar el juego después de que termine el contador
+  console.log("¡El juego ha comenzado!");
 });
 
 socket.on('opponentMove', (y) => {

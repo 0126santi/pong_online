@@ -111,11 +111,11 @@ io.on('connection', (socket) => {
     const room = rooms[roomName];
     if (!room || room.gameStarted) return;
   
-    room.gameStarted = true;
+    room.gameStarted = true; // Cambiar el estado para que el juego haya comenzado
   
-    // Iniciar el juego enviando la pelota y el puntaje inicial
+    // Enviar el evento 'startGame' a todos los jugadores de la sala
     io.to(roomName).emit('startGame', room.ball);
-  });
+  });  
 
   socket.on('restartCountdown', (roomName) => {
     const room = rooms[roomName];
