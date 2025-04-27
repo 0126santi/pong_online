@@ -19,7 +19,8 @@ io.on('connection', (socket) => {
       host: socket.id,
       gameStarted: false,
       ball: { x: 400, y: 250, vx: 5, vy: 3 },
-      score: { p1: 0, p2: 0 }
+      score: { p1: 0, p2: 0 },
+      countdownActive: false // Indicador para saber si el contador está en marcha
     };
     socket.join(roomName);
     socket.emit('roomCreated', { roomName, player: 1 });
@@ -64,20 +65,18 @@ io.on('connection', (socket) => {
     io.to(roomName).emit('ballUpdate', { ball });
   });
 
-
   socket.on('goalScored', ({ roomName, scorer }) => {
     const room = rooms[roomName];
     if (!room) return;
-  
+
     room.score[scorer]++; // Aumentamos el puntaje
-  
+
     // Enviar el puntaje actualizado a todos los jugadores
     io.to(roomName).emit('scoreUpdate', room.score);
-    
+
     // Reiniciar la partida con el contador
     io.to(roomName).emit('restartCountdown');
   });
-  
 
   socket.on('restartGame', (roomName) => {
     const room = rooms[roomName];
@@ -111,18 +110,20 @@ io.on('connection', (socket) => {
   socket.on('countdownFinished', (roomName) => {
     const room = rooms[roomName];
     if (!room || room.gameStarted) return;
-  
+
     room.gameStarted = true;
-    
+
     // Empezar el juego mandando la pelota y el score inicial
     io.to(roomName).emit('startGame', room.ball);
   });
 
-  socket.on('restartCountdown', () => {
-    if (!countdownActive) {
-      startCountdown();
+  socket.on('restartCountdown', (roomName) => {
+    const room = rooms[roomName];
+    if (room && !room.countdownActive) {
+      room.countdownActive = true;
+      io.to(roomName).emit('startCountdown'); // Iniciar el contador de 3 segundos
     }
-  });  
+  });
 });
 
 const PORT = process.env.PORT || 3000;

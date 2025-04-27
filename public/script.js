@@ -11,7 +11,6 @@ let countdown = 3; // Empezamos en 3
 let countdownActive = false; // Sabemos si el contador está activo
 let countdownInterval = null; // Guardamos el intervalo para limpiar después
 
-
 const interpolationFactor = 0.2;
 
 function createRoom() {
@@ -25,7 +24,7 @@ function joinRoom() {
 }
 
 function hostStartGame() {
-  socket.emit('startGame', room);
+  socket.emit('startGame', room); // Inicia el contador cuando el host presiona "Iniciar Juego"
 }
 
 function restartGame() {
@@ -71,12 +70,11 @@ function update() {
     if (ball.x <= 0) {
       socket.emit('goalScored', { roomName: room, scorer: 'p2' }); // Gol para jugador 2
       ball = { x: 400, y: 250, vx: 5, vy: 3 };
-  }
+    }
     if (ball.x >= 800) {
       socket.emit('goalScored', { roomName: room, scorer: 'p1' }); // Gol para jugador 1
       ball = { x: 400, y: 250, vx: -5, vy: 3 };
-  }
-  
+    }
 
     socket.emit('ballUpdate', { roomName: room, ball, score });
     checkGameOver();
@@ -147,15 +145,18 @@ socket.on('roomReady', () => {
   socket.emit('playerReady', room);
 });
 
+// Cambiamos la lógica aquí para iniciar el contador en vez de empezar el juego de inmediato
 socket.on('canStartGame', () => {
-  if (isHost) document.getElementById('startBtn').style.display = 'inline';
+  if (isHost) {
+    document.getElementById('startBtn').style.display = 'inline';
+  }
 });
 
 socket.on('startGame', (initialBall) => {
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;
-  document.getElementById('startBtn').style.display = 'none';
+  gameRunning = false; // Detener el juego mientras se hace el contador
+  startCountdown(); // Empezar el contador cuando el host da click para empezar
 });
 
 socket.on('opponentMove', (y) => {
