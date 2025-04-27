@@ -62,13 +62,16 @@ io.on('connection', (socket) => {
     if (!room || socket.id !== room.host) return;
     room.ball = ball;
     io.to(roomName).emit('ballUpdate', { ball });
-  });
+
+    // Emitir puntaje actualizado a todos los jugadores de la sala
+    io.to(roomName).emit('scoreUpdate', room.score);  // Emitir a ambos jugadores
+});
 
   socket.on('scoreUpdate', ({ roomName, score }) => {
     const room = rooms[roomName];
     if (!room || socket.id !== room.host) return;
     room.score = score;
-    io.to(roomName).emit('scoreUpdate', score);
+    io.to(roomName).emit('scoreUpdate', score);  // Emitir a todos los jugadores
   });
 
   socket.on('restartGame', (roomName) => {

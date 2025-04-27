@@ -138,6 +138,7 @@ socket.on('ballUpdate', ({ ball: b }) => {
 socket.on('scoreUpdate', (s) => {
   console.log("Puntaje actualizado:", s);  // Para depuración
   score = s;
+  // Mostrar el puntaje actualizado en el cliente
 });
 
 socket.on('resetGame', (initialBall) => {
