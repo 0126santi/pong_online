@@ -103,4 +103,10 @@ input {
     border-radius: 5px;
     font-size: 18px;
   }
-  
+
+  #countdown {
+    font-size: 60px;
+    font-weight: bold;
+    color: red;
+    text-shadow: 2px 2px 5px black;
+  }

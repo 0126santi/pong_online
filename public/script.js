@@ -7,6 +7,10 @@ let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
 let ballTarget = { x: 400, y: 250 };
 let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
+let countdown = 3; // Empezamos en 3
+let countdownActive = false; // Sabemos si el contador está activo
+let countdownInterval = null; // Guardamos el intervalo para limpiar después
+
 
 const interpolationFactor = 0.2;
 
@@ -107,6 +111,27 @@ function loop() {
   draw();
   requestAnimationFrame(loop);
 }
+
+function startCountdown() {
+  countdown = 3; // Empezamos desde 3
+  countdownActive = true; // El contador está activo
+  document.getElementById('countdown').style.display = 'block'; // Mostrar el contador en el UI
+
+  countdownInterval = setInterval(() => {
+    if (countdown > 0) {
+      document.getElementById('countdown').innerText = countdown; // Mostrar el número
+      countdown--; // Decrementar el contador
+    } else {
+      clearInterval(countdownInterval); // Limpiar el intervalo cuando termine
+      countdownActive = false; // El contador ya no está activo
+      document.getElementById('countdown').style.display = 'none'; // Ocultar el contador
+
+      // Aquí, podemos llamar a la función que hace que la pelota se mueva
+      socket.emit('countdownFinished', room); // Notificamos al servidor
+    }
+  }, 1000); // Hacerlo cada segundo
+}
+
 
 // SOCKETS
 
