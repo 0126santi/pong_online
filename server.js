@@ -19,8 +19,7 @@ io.on('connection', (socket) => {
       host: socket.id,
       gameStarted: false,
       ball: { x: 400, y: 250, vx: 5, vy: 3 },
-      score: { p1: 0, p2: 0 },
-      countdownActive: false // Indicador para saber si el contador está en marcha
+      score: { p1: 0, p2: 0 }
     };
     socket.join(roomName);
     socket.emit('roomCreated', { roomName, player: 1 });
@@ -65,18 +64,15 @@ io.on('connection', (socket) => {
     io.to(roomName).emit('ballUpdate', { ball });
   });
 
+
   socket.on('goalScored', ({ roomName, scorer }) => {
     const room = rooms[roomName];
     if (!room) return;
 
-    room.score[scorer]++; // Aumentamos el puntaje
+    room.score[scorer]++; // Actualiza el score en el servidor
+    io.to(roomName).emit('scoreUpdate', room.score); // Manda a todos
+});
 
-    // Enviar el puntaje actualizado a todos los jugadores
-    io.to(roomName).emit('scoreUpdate', room.score);
-
-    // Reiniciar la partida con el contador
-    io.to(roomName).emit('restartCountdown');
-  });
 
   socket.on('restartGame', (roomName) => {
     const room = rooms[roomName];
@@ -105,24 +101,6 @@ io.on('connection', (socket) => {
     if (!room) return;
     room.gameStarted = false;
     io.to(roomName).emit('showGameOver', winner);
-  });
-
-  socket.on('countdownFinished', (roomName) => {
-    const room = rooms[roomName];
-    if (!room || room.gameStarted) return;
-  
-    room.gameStarted = true; // Cambiar el estado para que el juego haya comenzado
-  
-    // Enviar el evento 'startGame' a todos los jugadores de la sala
-    io.to(roomName).emit('startGame', room.ball);
-  });  
-
-  socket.on('restartCountdown', (roomName) => {
-    const room = rooms[roomName];
-    if (room && !room.countdownActive) {
-      room.countdownActive = true;
-      io.to(roomName).emit('startCountdown'); // Iniciar el contador de 3 segundos
-    }
   });
 });
 

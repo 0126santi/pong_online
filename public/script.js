@@ -7,9 +7,6 @@ let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
 let ballTarget = { x: 400, y: 250 };
 let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
-let countdown = 3; // Empezamos en 3
-let countdownActive = false; // Sabemos si el contador está activo
-let countdownInterval = null; // Guardamos el intervalo para limpiar después
 
 const interpolationFactor = 0.2;
 
@@ -24,7 +21,7 @@ function joinRoom() {
 }
 
 function hostStartGame() {
-  socket.emit('startGame', room); // Inicia el contador cuando el host presiona "Iniciar Juego"
+  socket.emit('startGame', room);
 }
 
 function restartGame() {
@@ -70,11 +67,12 @@ function update() {
     if (ball.x <= 0) {
       socket.emit('goalScored', { roomName: room, scorer: 'p2' }); // Gol para jugador 2
       ball = { x: 400, y: 250, vx: 5, vy: 3 };
-    }
+  }
     if (ball.x >= 800) {
       socket.emit('goalScored', { roomName: room, scorer: 'p1' }); // Gol para jugador 1
       ball = { x: 400, y: 250, vx: -5, vy: 3 };
-    }
+  }
+  
 
     socket.emit('ballUpdate', { roomName: room, ball, score });
     checkGameOver();
@@ -110,27 +108,6 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-function startCountdown() {
-  countdown = 3; // Empezamos desde 3
-  countdownActive = true; // El contador está activo
-  document.getElementById('countdown').style.display = 'block'; // Mostrar el contador en el UI
-
-  countdownInterval = setInterval(() => {
-    if (countdown > 0) {
-      document.getElementById('countdown').innerText = countdown; // Mostrar el número
-      countdown--; // Decrementar el contador
-    } else {
-      clearInterval(countdownInterval); // Limpiar el intervalo cuando termine
-      countdownActive = false; // El contador ya no está activo
-      document.getElementById('countdown').style.display = 'none'; // Ocultar el contador
-
-      // Aquí, podemos llamar a la función que hace que la pelota se mueva
-      socket.emit('countdownFinished', room); // Notificamos al servidor que el contador ha terminado
-    }
-  }, 1000); // Hacerlo cada segundo
-}
-
-
 // SOCKETS
 
 socket.on('roomCreated', ({ roomName, player: p }) => {
@@ -145,18 +122,15 @@ socket.on('roomReady', () => {
   socket.emit('playerReady', room);
 });
 
-// Cambiamos la lógica aquí para iniciar el contador en vez de empezar el juego de inmediato
 socket.on('canStartGame', () => {
-  if (isHost) {
-    document.getElementById('startBtn').style.display = 'inline';
-  }
+  if (isHost) document.getElementById('startBtn').style.display = 'inline';
 });
 
 socket.on('startGame', (initialBall) => {
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;  // Iniciar el juego después de que termine el contador
-  console.log("¡El juego ha comenzado!");
+  gameRunning = true;
+  document.getElementById('startBtn').style.display = 'none';
 });
 
 socket.on('opponentMove', (y) => {
@@ -176,7 +150,7 @@ socket.on('resetGame', (initialBall) => {
   resetGameState();
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;  // Reiniciar el juego después de resetear
+  gameRunning = true;
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
 });
