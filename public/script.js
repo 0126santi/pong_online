@@ -5,10 +5,7 @@ const ctx = canvas.getContext("2d");
 let room = '', player = 0, isHost = false;
 let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
-let ballTarget = { x: 400, y: 250 };
 let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
-
-const interpolationFactor = 0.2;
 
 function createRoom() {
   room = document.getElementById('roomName').value;
@@ -34,7 +31,6 @@ function resetGameState() {
   leftPaddle.y = 200;
   rightPaddle.y = 200;
   ball = { x: 400, y: 250, vx: 5, vy: 3 };
-  ballTarget = { x: 400, y: 250 };
   score = { p1: 0, p2: 0 };
 }
 
@@ -49,10 +45,10 @@ function checkGameOver() {
 function update() {
   if (!gameRunning) return;
 
-  if (player === 1 && keys['w'] && leftPaddle.y > 0) leftPaddle.y -= 5;
-  if (player === 1 && keys['s'] && leftPaddle.y < 400) leftPaddle.y += 5;
-  if (player === 2 && keys['ArrowUp'] && rightPaddle.y > 0) rightPaddle.y -= 5;
-  if (player === 2 && keys['ArrowDown'] && rightPaddle.y < 400) rightPaddle.y += 5;
+  if ((player === 1 && keys['w']) && leftPaddle.y > 0) leftPaddle.y -= 5;
+  if ((player === 1 && keys['s']) && leftPaddle.y < 400) leftPaddle.y += 5;
+  if ((player === 2 && keys['ArrowUp']) && rightPaddle.y > 0) rightPaddle.y -= 5;
+  if ((player === 2 && keys['ArrowDown']) && rightPaddle.y < 400) rightPaddle.y += 5;
 
   socket.emit('paddleMove', { roomName: room, y: player === 1 ? leftPaddle.y : rightPaddle.y });
 
@@ -61,26 +57,30 @@ function update() {
     ball.y += ball.vy;
 
     if (ball.y <= 0 || ball.y >= 490) ball.vy *= -1;
+
     if (ball.x <= 20 && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + 100) ball.vx *= -1.05;
     if (ball.x >= 770 && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + 100) ball.vx *= -1.05;
 
-    if (ball.x <= 0) { score.p2++; ball = { x: 400, y: 250, vx: 5, vy: 3 }; }
-    if (ball.x >= 800) { score.p1++; ball = { x: 400, y: 250, vx: -5, vy: 3 }; }
-
-    socket.emit('ballUpdate', { roomName: room, ball, score });
-    checkGameOver();
-  } else {
-    // Interpolación hacia la posición enviada por el host
-    const maxDist = 50;
-    const dx = ballTarget.x - ball.x;
-    const dy = ballTarget.y - ball.y;
-    if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) {
-      ball.x = ballTarget.x;
-      ball.y = ballTarget.y;
-    } else {
-      ball.x += dx * interpolationFactor;
-      ball.y += dy * interpolationFactor;
+    // ⚽ GOL: manejar con goalScored especial
+    if (ball.x <= 0) {
+      score.p2++;
+      const newBall = { x: 400, y: 250, vx: 5, vy: 3 };
+      socket.emit('goalScored', { roomName: room, ball: newBall, score });
+      ball = newBall;
+      checkGameOver();
+      return;
     }
+    if (ball.x >= 800) {
+      score.p1++;
+      const newBall = { x: 400, y: 250, vx: -5, vy: 3 };
+      socket.emit('goalScored', { roomName: room, ball: newBall, score });
+      ball = newBall;
+      checkGameOver();
+      return;
+    }
+
+    // Solo emite actualizaciones normales si no hay gol
+    socket.emit('ballUpdate', { roomName: room, ball });
   }
 }
 
@@ -101,8 +101,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// SOCKETS
-
+// Socket events
 socket.on('roomCreated', ({ roomName, player: p }) => {
   player = p;
   isHost = player === 1;
@@ -121,7 +120,6 @@ socket.on('canStartGame', () => {
 
 socket.on('startGame', (initialBall) => {
   ball = initialBall;
-  ballTarget = initialBall;
   gameRunning = true;
   document.getElementById('startBtn').style.display = 'none';
 });
@@ -131,15 +129,19 @@ socket.on('opponentMove', (y) => {
   else leftPaddle.y = y;
 });
 
-socket.on('ballUpdate', ({ ball: b, score: s }) => {
-  ballTarget = b;
+socket.on('ballUpdate', ({ ball: b }) => {
+  ball = b;
+});
+
+// 🎯 Nuevo evento para recibir goles
+socket.on('goalScored', ({ ball: b, score: s }) => {
+  ball = b;
   score = s;
 });
 
 socket.on('resetGame', (initialBall) => {
   resetGameState();
   ball = initialBall;
-  ballTarget = initialBall;
   gameRunning = true;
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
@@ -156,6 +158,7 @@ socket.on('showGameOver', (winner) => {
   document.getElementById('gameOver').style.display = 'block';
   const winnerText = winner === 1 ? "¡Jugador 1 gana!" : "¡Jugador 2 gana!";
   document.getElementById('winnerText').innerText = winnerText;
+
   if (isHost) {
     document.getElementById('startBtn').style.display = 'none';
     document.querySelector('#gameOver button').style.display = 'inline';
@@ -168,3 +171,4 @@ document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
 
 loop();
+
