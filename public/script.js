@@ -137,8 +137,17 @@ socket.on('ballUpdate', ({ ball: b }) => {
 
 socket.on('scoreUpdate', (s) => {
   console.log("Puntaje actualizado:", s);  // Para depuración
-  score = s;
-  // Mostrar el puntaje actualizado en el cliente
+  score = s;  // Actualiza el puntaje en el cliente
+  
+  // Actualizar la interfaz con el puntaje
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.fillRect(leftPaddle.x, leftPaddle.y, 10, 100);
+  ctx.fillRect(rightPaddle.x, rightPaddle.y, 10, 100);
+  ctx.fillRect(ball.x, ball.y, 10, 10);
+  ctx.font = "20px sans-serif";
+  ctx.fillText(`Jugador 1: ${score.p1}`, 100, 30);
+  ctx.fillText(`Jugador 2: ${score.p2}`, 600, 30);
 });
 
 socket.on('resetGame', (initialBall) => {
