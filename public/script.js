@@ -7,8 +7,6 @@ let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
 let ballTarget = { x: 400, y: 250 };
 let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
-let countdown = 3;  // Iniciamos con 3 segundos
-let countdownInterval;
 
 const interpolationFactor = 0.2;
 
@@ -110,35 +108,6 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-function startCountdown() {
-  countdown = 3;
-  document.getElementById('countdown').style.display = 'block'; // Mostrar el contador
-
-  countdownInterval = setInterval(() => {
-    if (countdown > 0) {
-      document.getElementById('countdown').innerText = countdown;
-      countdown--;
-    } else {
-      clearInterval(countdownInterval);
-      document.getElementById('countdown').style.display = 'none'; // Ocultar contador
-      startGame();  // Iniciar el juego
-    }
-  }, 1000);
-}
-
-function startGame() {
-  gameRunning = true;
-  socket.emit('startGame', room);
-}
-
-function restartGame() {
-  if (isHost) {
-    socket.emit('restartGame', room);
-    startCountdown();  // Iniciar cuenta regresiva al reiniciar
-  }
-  document.getElementById('gameOver').style.display = 'none';
-  document.getElementById('gameCanvas').style.display = 'block';
-}
 // SOCKETS
 
 socket.on('roomCreated', ({ roomName, player: p }) => {
@@ -162,7 +131,6 @@ socket.on('startGame', (initialBall) => {
   ballTarget = initialBall;
   gameRunning = true;
   document.getElementById('startBtn').style.display = 'none';
-  startCountdown();  // Mostrar cuenta regresiva al iniciar el juego
 });
 
 socket.on('opponentMove', (y) => {

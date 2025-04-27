@@ -42,17 +42,12 @@
 
   <div id="gameArea">
     <canvas id="gameCanvas" width="800" height="500"></canvas>
-    <button id="startBtn" onclick="hostStartGame()" style="display: none;">Iniciar Partida</button>
-
+    <button id="startBtn" onclick="hostStartGame()">Iniciar Partida</button>
   </div>
 
   <div id="gameOver">
     <div id="winnerText"></div>
     <button onclick="restartGame()">Reiniciar Juego</button>
-  </div>
-
-  <div id="countdown" style="position: absolute; top: 50%; left: 50%; font-size: 50px; color: white; display: none;">
-    3
   </div>
   
   <script src="/socket.io/socket.io.js"></script>
