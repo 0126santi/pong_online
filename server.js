@@ -64,12 +64,15 @@ io.on('connection', (socket) => {
     io.to(roomName).emit('ballUpdate', { ball });
   });
 
-  socket.on('scoreUpdate', ({ roomName, score }) => {
+
+  socket.on('goalScored', ({ roomName, scorer }) => {
     const room = rooms[roomName];
-    if (!room || socket.id !== room.host) return;
-    room.score = score;
-    io.to(roomName).emit('scoreUpdate', score);
-  });
+    if (!room) return;
+
+    room.score[scorer]++; // Actualiza el score en el servidor
+    io.to(roomName).emit('scoreUpdate', room.score); // Manda a todos
+});
+
 
   socket.on('restartGame', (roomName) => {
     const room = rooms[roomName];

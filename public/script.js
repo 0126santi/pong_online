@@ -64,13 +64,15 @@ function update() {
     if (ball.x <= 20 && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + 100) ball.vx *= -1.05;
     if (ball.x >= 770 && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + 100) ball.vx *= -1.05;
 
-    if (ball.x <= 0) { score.p2++; ball = { x: 400, y: 250, vx: 5, vy: 3 }; }
-
-      socket.emit('scoreUpdate' , { roomName: room, score });
-
-    if (ball.x >= 800) { score.p1++; ball = { x: 400, y: 250, vx: -5, vy: 3 }; }
-
-      socket.emit('scoreUpdate' , { roomName: room, score });
+    if (ball.x <= 0) {
+      socket.emit('goalScored', { roomName: room, scorer: 'p2' }); // Gol para jugador 2
+      ball = { x: 400, y: 250, vx: 5, vy: 3 };
+  }
+    if (ball.x >= 800) {
+      socket.emit('goalScored', { roomName: room, scorer: 'p1' }); // Gol para jugador 1
+      ball = { x: 400, y: 250, vx: -5, vy: 3 };
+  }
+  
 
     socket.emit('ballUpdate', { roomName: room, ball, score });
     checkGameOver();
