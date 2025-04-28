@@ -179,11 +179,12 @@ socket.on('scoreUpdate', (s) => {
   score = s;
 });
 
-socket.on('resetGame', (initialBall) => {
+socket.on('resetGame', ({ ball: initialBall, score: initialScore }) => {
   resetGameState();
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = false; //  NO arrancamos el juego todavía, solo reseteamos
+  score = initialScore; 
+  gameRunning = false;
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
 });
