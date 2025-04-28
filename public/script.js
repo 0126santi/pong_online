@@ -28,10 +28,13 @@ function hostStartGame() {
 }
 
 function restartGame() {
-  if (isHost) socket.emit('startCountdown', room);
+  if (isHost) {
+    socket.emit('restartGame', room); 
+  }
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
 }
+
 
 function resetGameState() {
   leftPaddle.y = 200;
