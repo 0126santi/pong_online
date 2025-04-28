@@ -22,13 +22,15 @@ io.on('connection', (socket) => {
       score: { p1: 0, p2: 0 }
     };
     socket.join(roomName);
+    socket.roomName = roomName; // guardar el nombre de la sala
     socket.emit('roomCreated', { roomName, player: 1 });
-  });
+});
 
   socket.on('joinRoom', (roomName) => {
     if (!rooms[roomName] || rooms[roomName].players.length >= 2) return;
     rooms[roomName].players.push(socket.id);
     socket.join(roomName);
+    socket.roomName = roomName; // guardar el nombre de la sala
     socket.emit('roomCreated', { roomName, player: 2 });
     io.to(roomName).emit('roomReady');
   });
@@ -103,15 +105,15 @@ io.on('connection', (socket) => {
     io.to(roomName).emit('showGameOver', winner);
   });
 
-  socket.on('startCountdown', () => {
-    const roomId = socket.roomId; // Asegurate de que el socket tenga guardado su sala
-    io.to(roomId).emit('startCountdown'); // Le decimos a todos los jugadores que arranquen el contador
-});
-
-socket.on('countdownFinished', () => {
-    const roomId = socket.roomId;
-    io.to(roomId).emit('startGame'); // Cuando el contador termina, arrancamos el juego para todos
-});
+  socket.on('startCountdown', (roomName) => {
+    // Enviar a todos en la sala que arranque el contador
+    io.to(roomName).emit('startCountdown');
+  });
+  
+  socket.on('countdownFinished', () => {
+    // Aquí haces que arranque el juego
+    io.to(roomNameDelJugador).emit('startGame', initialBallPosition);
+  });
 
 });
 
