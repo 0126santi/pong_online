@@ -102,6 +102,17 @@ io.on('connection', (socket) => {
     room.gameStarted = false;
     io.to(roomName).emit('showGameOver', winner);
   });
+
+  socket.on('startCountdown', () => {
+    const roomId = socket.roomId; // Asegurate de que el socket tenga guardado su sala
+    io.to(roomId).emit('startCountdown'); // Le decimos a todos los jugadores que arranquen el contador
+});
+
+socket.on('countdownFinished', () => {
+    const roomId = socket.roomId;
+    io.to(roomId).emit('startGame'); // Cuando el contador termina, arrancamos el juego para todos
+});
+
 });
 
 const PORT = process.env.PORT || 3000;

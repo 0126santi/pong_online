@@ -7,6 +7,9 @@ let leftPaddle = { x: 10, y: 200 }, rightPaddle = { x: 780, y: 200 };
 let ball = { x: 400, y: 250, vx: 5, vy: 3 };
 let ballTarget = { x: 400, y: 250 };
 let score = { p1: 0, p2: 0 }, keys = {}, gameRunning = false;
+let countdown = 3;
+let countdownActive = false;
+let countdownInterval;
 
 const interpolationFactor = 0.2;
 
@@ -21,11 +24,11 @@ function joinRoom() {
 }
 
 function hostStartGame() {
-  socket.emit('startGame', room);
+  if (isHost) socket.emit('startCountdown', room);
 }
 
 function restartGame() {
-  if (isHost) socket.emit('restartGame', room);
+  if (isHost) socket.emit('startCountdown', room);
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
 }
@@ -93,14 +96,22 @@ function update() {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (countdownActive) {
+    drawCountdown(ctx); // Dibujar el contador gigante en el centro
+    return; // Mientras el contador esté activo, no seguimos dibujando el juego
+  }
+
   ctx.fillStyle = "white";
   ctx.fillRect(leftPaddle.x, leftPaddle.y, 10, 100);
   ctx.fillRect(rightPaddle.x, rightPaddle.y, 10, 100);
   ctx.fillRect(ball.x, ball.y, 10, 10);
+  
   ctx.font = "20px sans-serif";
   ctx.fillText(`Jugador 1: ${score.p1}`, 100, 30);
   ctx.fillText(`Jugador 2: ${score.p2}`, 600, 30);
 }
+
 
 function loop() {
   update();
@@ -108,6 +119,27 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
+function startCountdown() {
+  countdown = 3;
+  countdownActive = true;
+
+  countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown === 0) {
+          clearInterval(countdownInterval);
+          countdownActive = false;
+          socket.emit('countdownFinished'); // Avisamos al server que terminó el contador
+      }
+  }, 1000);
+}
+
+function drawCountdown(ctx) {
+  ctx.fillStyle = 'white';
+  ctx.font = '80px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(countdown > 0 ? countdown : 'GO!', canvas.width / 2, canvas.height / 2);
+}
 // SOCKETS
 
 socket.on('roomCreated', ({ roomName, player: p }) => {
@@ -172,6 +204,16 @@ socket.on('showGameOver', (winner) => {
   } else {
     document.querySelector('#gameOver button').style.display = 'none';
   }
+});
+
+socket.on('startCountdown', () => {
+  startCountdown();
+});
+
+socket.on('startGame', () => {
+  // Cambias el estado de juego a "playing"
+  gameState = "playing"; 
+  // Aquí podés también reiniciar posiciones, puntuaciones, etc, si hace falta
 });
 
 document.addEventListener('keydown', e => keys[e.key] = true);
