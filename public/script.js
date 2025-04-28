@@ -128,10 +128,11 @@ function startCountdown() {
       if (countdown === 0) {
           clearInterval(countdownInterval);
           countdownActive = false;
-          socket.emit('countdownFinished'); // Avisamos al server que terminó el contador
+          socket.emit('countdownFinished', room); // 🔥 PASAR el nombre de la sala acá
       }
   }, 1000);
 }
+
 
 function drawCountdown(ctx) {
   ctx.fillStyle = 'white';
