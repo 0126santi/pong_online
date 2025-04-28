@@ -83,7 +83,10 @@ io.on('connection', (socket) => {
     room.ball = { x: 400, y: 250, vx: 5, vy: 3 };
     room.score = { p1: 0, p2: 0 };
     io.to(roomName).emit('resetGame', room.ball);
-  });
+
+    //  Después de resetear todo, arranca el contador
+    io.to(roomName).emit('startCountdown');
+});
 
   socket.on('disconnect', () => {
     for (const roomName in rooms) {

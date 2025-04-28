@@ -183,7 +183,7 @@ socket.on('resetGame', (initialBall) => {
   resetGameState();
   ball = initialBall;
   ballTarget = initialBall;
-  gameRunning = true;
+  gameRunning = false; //  NO arrancamos el juego todavía, solo reseteamos
   document.getElementById('gameOver').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
 });
