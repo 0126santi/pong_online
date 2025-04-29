@@ -215,6 +215,9 @@ socket.on('showGameOver', (winner) => {
   } else {
     document.querySelector('#gameOver button').style.display = 'none';
   }
+  document.querySelectorAll('.controles-lateral').forEach(el => {
+    el.style.display = 'none';
+  });  
 });
 
 socket.on('startCountdown', () => {
