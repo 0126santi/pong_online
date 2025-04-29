@@ -151,6 +151,12 @@ socket.on('roomCreated', ({ roomName, player: p }) => {
   isHost = player === 1;
   document.getElementById('menu').style.display = 'none';
   document.getElementById('gameCanvas').style.display = 'block';
+
+  // Mostrar controles laterales
+  document.querySelectorAll('.controles-lateral').forEach(el => {
+    el.style.display = 'block';
+  });
+
   socket.emit('playerReady', roomName);
 });
 

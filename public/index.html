@@ -40,6 +40,35 @@
     </div>
   </div>
 
+  <div id="gameWrapper">
+    <!-- Controles laterales en juego -->
+    <div class="controles-lateral jugador1">
+      <div class="jugador-nombre">Jugador 1</div>
+      <div class="teclas">
+        <div class="tecla">W</div>
+        <small>Mover Arriba</small><br>
+        <div class="tecla">S</div>
+        <small>Mover Abajo</small>
+      </div>
+    </div>
+  
+    <div id="gameArea">
+      <canvas id="gameCanvas" width="800" height="500"></canvas>
+      <button id="startBtn" onclick="hostStartGame()">Iniciar Partida</button>
+    </div>
+  
+    <div class="controles-lateral jugador2">
+      <div class="jugador-nombre">Jugador 2</div>
+      <div class="teclas">
+        <div class="tecla">↑</div>
+        <small>Mover Arriba</small><br>
+        <div class="tecla">↓</div>
+        <small>Mover Abajo</small>
+      </div>
+    </div>
+  </div>
+  
+
   <div id="gameArea">
     <canvas id="gameCanvas" width="800" height="500"></canvas>
     <button id="startBtn" onclick="hostStartGame()">Iniciar Partida</button>
