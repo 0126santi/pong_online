@@ -199,6 +199,10 @@ socket.on('startGame', () => {
   gameState = "playing"; 
   // Aquí podés también reiniciar posiciones, puntuaciones, etc, si hace falta
 });
+socket.on('countdownFinished', () => {
+  gameRunning = true;
+});
+
 
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
