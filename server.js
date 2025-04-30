@@ -103,10 +103,9 @@ io.on('connection', (socket) => {
     const room = rooms[roomName];
     if (!room) return;
     room.gameStarted = false;
-    // Convertir 'p1' y 'p2' a 1 y 2
-    const winnerPlayer = winner === 'p1' ? 1 : 2;
-    io.to(roomName).emit('showGameOver', winnerPlayer);  // Enviar 1 o 2 en lugar de 'p1' o 'p2'
-  });  
+    io.to(roomName).emit('showGameOver', winner); 
+  });
+  
 
   socket.on('startCountdown', (roomName) => {
     // Enviar a todos en la sala que arranque el contador
