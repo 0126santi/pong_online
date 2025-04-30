@@ -63,8 +63,38 @@ function update() {
   socket.emit('paddleMove', { roomName: room, y: player === 1 ? leftPaddle.y : rightPaddle.y });
 
   if (isHost) {
-    // Ya no hace nada, el servidor se encarga de mover la pelota
-  }  
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    if (ball.y <= 0 || ball.y >= 490) ball.vy *= -1;
+    if (ball.x <= 20 && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + 100) ball.vx *= -1.05;
+    if (ball.x >= 770 && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + 100) ball.vx *= -1.05;
+
+    if (ball.x <= 0) {
+      socket.emit('goalScored', { roomName: room, scorer: 'p2' }); // Gol para jugador 2
+      ball = { x: 400, y: 250, vx: 5, vy: 3 };
+  }
+    if (ball.x >= 800) {
+      socket.emit('goalScored', { roomName: room, scorer: 'p1' }); // Gol para jugador 1
+      ball = { x: 400, y: 250, vx: -5, vy: 3 };
+  }
+  
+
+    socket.emit('ballUpdate', { roomName: room, ball, score });
+    checkGameOver();
+  } else {
+    // Interpolación hacia la posición enviada por el host
+    const maxDist = 50;
+    const dx = ballTarget.x - ball.x;
+    const dy = ballTarget.y - ball.y;
+    if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) {
+      ball.x = ballTarget.x;
+      ball.y = ballTarget.y;
+    } else {
+      ball.x += dx * interpolationFactor;
+      ball.y += dy * interpolationFactor;
+    }
+  }
 }
 
 function draw() {
@@ -199,10 +229,6 @@ socket.on('startGame', () => {
   gameState = "playing"; 
   // Aquí podés también reiniciar posiciones, puntuaciones, etc, si hace falta
 });
-socket.on('countdownFinished', () => {
-  gameRunning = true;
-});
-
 
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
