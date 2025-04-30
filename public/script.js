@@ -83,17 +83,9 @@ function update() {
     socket.emit('ballUpdate', { roomName: room, ball, score });
     checkGameOver();
   } else {
-    // Interpolación hacia la posición enviada por el host
-    const maxDist = 50;
-    const dx = ballTarget.x - ball.x;
-    const dy = ballTarget.y - ball.y;
-    if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) {
-      ball.x = ballTarget.x;
-      ball.y = ballTarget.y;
-    } else {
-      ball.x += dx * interpolationFactor;
-      ball.y += dy * interpolationFactor;
-    }
+   // Actualización directa sin interpolación
+  ball.x = ballTarget.x;
+  ball.y = ballTarget.y;
   }
 }
 
