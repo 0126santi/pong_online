@@ -47,8 +47,8 @@ function resetGameState() {
 function checkGameOver() {
   if (score.p1 >= 5 || score.p2 >= 5) {
     gameRunning = false;
-    const winner = score.p1 >= 5 ? 'Jugador 1' : 'Jugador 2';
-    socket.emit('gameOver', { roomName: room, winner });
+    const winner = score.p1 >= 5 ? 1 : 2; 
+    socket.emit('gameOver', { roomName: room, winner }); 
   }
 }
 
