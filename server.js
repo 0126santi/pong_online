@@ -19,20 +19,63 @@ io.on('connection', (socket) => {
       host: socket.id,
       gameStarted: false,
       ball: { x: 400, y: 250, vx: 5, vy: 3 },
-      score: { p1: 0, p2: 0 },
-      leftPaddleY: 200,
-      rightPaddleY: 200
+      score: { p1: 0, p2: 0 }
     };
     socket.join(roomName);
-    socket.roomName = roomName;
+    socket.roomName = roomName; // guardar el nombre de la sala
     socket.emit('roomCreated', { roomName, player: 1 });
-  });
+
+    setInterval(() => {
+      for (const roomName in rooms) {
+        const room = rooms[roomName];
+        if (!room.gameStarted) continue;
+    
+        let ball = room.ball;
+        let score = room.score;
+    
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+    
+        // Rebotar en bordes
+        if (ball.y <= 0 || ball.y >= 490) ball.vy *= -1;
+    
+        // Rebotar en paletas — necesitas saber sus posiciones, así que guárdalas
+        const leftY = room.leftPaddleY || 200;
+        const rightY = room.rightPaddleY || 200;
+    
+        if (ball.x <= 20 && ball.y >= leftY && ball.y <= leftY + 100) ball.vx *= -1.05;
+        if (ball.x >= 770 && ball.y >= rightY && ball.y <= rightY + 100) ball.vx *= -1.05;
+    
+        // Goles
+        if (ball.x <= 0) {
+          room.score.p2++;
+          ball = room.ball = { x: 400, y: 250, vx: 5, vy: 3 };
+        }
+        if (ball.x >= 800) {
+          room.score.p1++;
+          ball = room.ball = { x: 400, y: 250, vx: -5, vy: 3 };
+        }
+    
+        // Emitir estado
+        io.to(roomName).emit('ballUpdate', { ball });
+        io.to(roomName).emit('scoreUpdate', room.score);
+    
+        // Game over
+        if (room.score.p1 >= 5 || room.score.p2 >= 5) {
+          const winner = room.score.p1 >= 5 ? 1 : 2;
+          room.gameStarted = false;
+          io.to(roomName).emit('showGameOver', winner);
+        }
+      }
+    }, 1000 / 60); // 60 veces por segundo
+    
+});
 
   socket.on('joinRoom', (roomName) => {
     if (!rooms[roomName] || rooms[roomName].players.length >= 2) return;
     rooms[roomName].players.push(socket.id);
     socket.join(roomName);
-    socket.roomName = roomName;
+    socket.roomName = roomName; // guardar el nombre de la sala
     socket.emit('roomCreated', { roomName, player: 2 });
     io.to(roomName).emit('roomReady');
   });
@@ -57,13 +100,32 @@ io.on('connection', (socket) => {
     const room = rooms[roomName];
     if (!room) return;
     const isHost = socket.id === room.host;
+  
     if (isHost) room.leftPaddleY = y;
     else room.rightPaddleY = y;
-
+  
     room.players.forEach(pid => {
       if (pid !== socket.id) io.to(pid).emit('opponentMove', y);
     });
   });
+  
+
+  socket.on('ballUpdate', ({ roomName, ball }) => {
+    const room = rooms[roomName];
+    if (!room || socket.id !== room.host) return;
+    room.ball = ball;
+    io.to(roomName).emit('ballUpdate', { ball });
+  });
+
+
+  socket.on('goalScored', ({ roomName, scorer }) => {
+    const room = rooms[roomName];
+    if (!room) return;
+
+    room.score[scorer]++; // Actualiza el score en el servidor
+    io.to(roomName).emit('scoreUpdate', room.score); // Manda a todos
+});
+
 
   socket.on('restartGame', (roomName) => {
     const room = rooms[roomName];
@@ -94,57 +156,27 @@ io.on('connection', (socket) => {
     room.gameStarted = false;
     io.to(roomName).emit('showGameOver', winner); 
   });
+  
 
   socket.on('startCountdown', (roomName) => {
+    // Enviar a todos en la sala que arranque el contador
     io.to(roomName).emit('startCountdown');
   });
-
+  
   socket.on('countdownFinished', (roomName) => {
     const room = rooms[roomName];
     if (!room) return;
     room.gameStarted = true;
-    io.to(roomName).emit('startGame', room.ball);
-  });
+    io.to(roomName).emit('startGame', room.ball); // Manda el estado inicial de la pelota
 });
 
-// 🔁 Movimiento de la pelota desde el servidor (tick de física)
-setInterval(() => {
-  for (const roomName in rooms) {
-    const room = rooms[roomName];
-    if (!room.gameStarted) continue;
 
-    let ball = room.ball;
-    ball.x += ball.vx;
-    ball.y += ball.vy;
+});
 
-    if (ball.y <= 0 || ball.y >= 490) ball.vy *= -1;
-
-    const leftY = room.leftPaddleY;
-    const rightY = room.rightPaddleY;
-
-    if (ball.x <= 20 && ball.y >= leftY && ball.y <= leftY + 100) ball.vx *= -1.05;
-    if (ball.x >= 770 && ball.y >= rightY && ball.y <= rightY + 100) ball.vx *= -1.05;
-
-    if (ball.x <= 0) {
-      room.score.p2++;
-      room.ball = { x: 400, y: 250, vx: 5, vy: 3 };
-    }
-
-    if (ball.x >= 800) {
-      room.score.p1++;
-      room.ball = { x: 400, y: 250, vx: -5, vy: 3 };
-    }
-
-    io.to(roomName).emit('ballUpdate', { ball: room.ball });
-    io.to(roomName).emit('scoreUpdate', room.score);
-
-    if (room.score.p1 >= 5 || room.score.p2 >= 5) {
-      const winner = room.score.p1 >= 5 ? 1 : 2;
-      room.gameStarted = false;
-      io.to(roomName).emit('showGameOver', winner);
-    }
-  }
-}, 1000 / 60); // 60 fps
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
 
 
 
